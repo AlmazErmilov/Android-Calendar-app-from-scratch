@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">Calendar</string>
+    <string name="selected_date"> </string>
+    <string name="ok">OK</string>
+    <string name="day_info_long">Day %1$d of %2$s is %3$d days since the start of %4$d.</string>
+    <string name="day_info">This day is %3$d day(s) since the start of %4$d.</string>
+    <string name="month_info">This month has %1$d working days. \nClick on a day to get the number of days since January 1st.</string>
+    <string name="invalid_month">Invalid month</string>
+
+    <string-array name="month_names">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+    <string name="month_names" />
+
 </resources>
+

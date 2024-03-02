@@ -22,48 +22,53 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import java.time.LocalDate
 import java.time.temporal.ChronoField
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
-//import androidx.compose.foundation.layout.FlowRowScopeInstance.align
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import java.time.format.TextStyle
+import java.time.DayOfWeek
 import java.time.temporal.WeekFields
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CalendarTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CalendarScreen(month = 9, year = 2024, backgroundImage = painterResource(id = R.drawable.ic_launcher_foreground))
+                    CalendarScreen(month = 2, year = 2024, backgroundImage = painterResource(id = R.drawable.ic_launcher_foreground))
                 }
             }
         }
     }
 }
 
+@Preview(showBackground = true) // testing
+@Composable
+fun DefaultPreview() {
+    CalendarTheme {
+        CalendarScreen(month = 1, year = 2024, backgroundImage = painterResource(id = R.drawable.ic_launcher_foreground))
+    }
+}
+
 @Composable
 fun CalendarScreen(month: Int, year: Int, backgroundImage: Painter) {
-    // This should be your ViewModel or some similar state holder
     val calendarState = remember { CalendarState() }
 
     MaterialTheme {
@@ -76,10 +81,11 @@ fun CalendarScreen(month: Int, year: Int, backgroundImage: Painter) {
                     month = month,
                     year = year,
                     calendarState = calendarState,
-                    onDayClicked = { day ->
+                    onDayClicked = { day:Int ->
                         calendarState.showDialogForDay(day, month, year)
                     }
                 )
+                MonthInfo(month = month, year = year)
             }
         }
     }
@@ -94,36 +100,14 @@ fun CalendarScreen(month: Int, year: Int, backgroundImage: Painter) {
     }
 }
 
-class CalendarState {
-    var showDialog by mutableStateOf(false)
-    var selectedDay by mutableStateOf(1)
-    var selectedMonth by mutableStateOf(1) // Assuming you want to show the month in the dialog
-    var selectedYear by mutableStateOf(2024) // Assuming you want to show the year in the dialog
-
-    fun showDialogForDay(day: Int, month: Int, year: Int) {
-        selectedDay = day
-        selectedMonth = month
-        selectedYear = year
-        showDialog = true
-    }
-}
-
 @Composable
 fun BackgroundImage(image: Painter) {
     Image(
         painter = image,
-        contentDescription = null, // Decorative image does not require content description
+        contentDescription = null,
         modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.Fit // Cover ensures the image fills the bounds of the container
+        contentScale = ContentScale.Fit
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    CalendarTheme {
-        CalendarScreen(month = 9, year = 2024, backgroundImage = painterResource(id = R.drawable.ic_launcher_foreground))
-    }
 }
 
 @Composable
@@ -138,15 +122,14 @@ fun CalendarHeader(monthName: String, year: Int) {
 @Composable
 fun WeekDaysHeader() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Absolute.SpaceBetween) {
-        listOf("", "M", "T", "O", "T", "F", "L", "S").forEach { day ->
-            //Spacer(modifier = Modifier.width(20.dp)) // Add some spacing
+        listOf("", "M", "T", "W", "T", "F", "S", "S").forEach { day ->
             Text(
                 text = day,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold,
                     fontSize = 20.sp),
                 color = Color.Gray,
-                modifier = Modifier.padding(horizontal = 7.dp)
-                    .width(25.dp),
+                modifier = Modifier.padding(horizontal = 6.dp)
+                    .width(26.dp),
                 textAlign = TextAlign.Center,
             )
         }
@@ -156,47 +139,19 @@ fun WeekDaysHeader() {
 @Composable
 fun DayDialog(day: Int, month: Int, year: Int, onCloseRequest: () -> Unit) {
     val daysSinceYearStart = calculateDaysSinceYearStart(day, month, year)
-    val monthName = month.toMonthName()
+    val monthName = stringResource(id = R.string.month_names, month)
 
     AlertDialog(
         onDismissRequest = onCloseRequest,
-        title = { Text("Selected Date") },
-        text = { Text("Day $day of $monthName is $daysSinceYearStart days since the start of $year.") },
+        title = { Text(stringResource(id = R.string.selected_date)) },
+        text = { Text(stringResource(id = R.string.day_info, day, monthName, daysSinceYearStart, year)) },
         confirmButton = {
             Button(onClick = onCloseRequest) {
-                Text("OK")
+                Text(stringResource(id = R.string.ok))
             }
         },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     )
-}
-
-// Extension function to get month name from its number
-fun Int.toMonthName(): String {
-    return when (this) {
-        1 -> "January"
-        2 -> "February"
-        3 -> "March"
-        4 -> "April"
-        5 -> "May"
-        6 -> "June"
-        7 -> "July"
-        8 -> "August"
-        9 -> "September"
-        10 -> "October"
-        11 -> "November"
-        12 -> "December"
-        else -> "Invalid month"
-    }
-}
-
-fun getNumberOfDaysInMonth(month: Int, year: Int): Int {
-    return LocalDate.of(year, month, 1).lengthOfMonth()
-}
-
-// Returns the day of the week for the first day of the month
-fun getFirstDayOfWeekOfMonth(month: Int, year: Int): Int {
-    return LocalDate.of(year, month, 1).get(ChronoField.DAY_OF_WEEK)
 }
 
 @Composable
@@ -205,7 +160,7 @@ fun CalendarGrid(month: Int, year: Int, calendarState: CalendarState, onDayClick
     val firstDayOfWeek = getFirstDayOfWeekOfMonth(month, year) - 1 // Adjust for Monday as the first day
     val firstDateOfMonth = LocalDate.of(year, month, 1)
 
-    // Calculate the number of rows needed for the grid
+    // number of rows needed for the grid
     val numberOfRows = (daysInMonth + firstDayOfWeek - 1) / 7 + 1
 
     Row {
@@ -227,7 +182,6 @@ fun CalendarGrid(month: Int, year: Int, calendarState: CalendarState, onDayClick
     }
 }
 
-
 @Composable
 fun WeekRow(week: Int, firstDayOfWeek: Int, daysInMonth: Int, month: Int, year: Int, calendarState: CalendarState, onDayClicked: (Int) -> Unit) {
     Row(horizontalArrangement = Arrangement.SpaceBetween) {
@@ -236,7 +190,7 @@ fun WeekRow(week: Int, firstDayOfWeek: Int, daysInMonth: Int, month: Int, year: 
             if (dayNumber in 1..daysInMonth) {
                 DayCell(dayNumber, calendarState, month, year)
             } else {
-                Spacer(modifier = Modifier.width(40.dp)) // Use Spacer for alignment
+                DayCell(null, calendarState, month, year)
             }
         }
     }
@@ -268,8 +222,27 @@ fun WeekNumber(weekNumber: Int) {
         modifier = Modifier
             .padding(8.dp),
             //.align(Alignment.CenterHorizontally),
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Center,
+        color = Color.Gray
     )
+}
+
+@Composable
+fun MonthInfo(month: Int, year: Int) {
+    val numWorkDays = calculateWorkingDaysOfMonth(month, year)
+    val monthInfoText = stringResource(id = R.string.month_info, numWorkDays)
+
+    Box(
+        modifier = Modifier
+            .padding(12.dp),
+    ) {
+        Text(
+            text = monthInfoText,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Left,
+            color = Color.Unspecified
+        )
+    }
 }
 
 fun calculateDaysSinceYearStart(day: Int, month: Int, year: Int): Int {
@@ -282,3 +255,43 @@ fun getWeekOfYear(date: LocalDate): Int {
     return date.get(WeekFields.of(Locale.getDefault()).weekOfYear())
 }
 
+@Composable
+fun Int.toMonthName(): String {
+    val context = LocalContext.current
+    val monthsArray = context.resources.getStringArray(R.array.month_names)
+    return if (this in 1..12) monthsArray[this - 1] else context.getString(R.string.invalid_month)
+}
+
+fun getNumberOfDaysInMonth(month: Int, year: Int): Int {
+    return LocalDate.of(year, month, 1).lengthOfMonth()
+}
+
+fun getFirstDayOfWeekOfMonth(month: Int, year: Int): Int {
+    return LocalDate.of(year, month, 1).get(ChronoField.DAY_OF_WEEK)
+}
+
+fun calculateWorkingDaysOfMonth(month: Int, year: Int): Int {
+    var workingDays = 0
+    val monthLength = getNumberOfDaysInMonth(month, year)
+    for (day in 1..monthLength) {
+        val date = LocalDate.of(year, month, day)
+        if (date.dayOfWeek !in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) {
+            workingDays++
+        }
+    }
+    return workingDays
+}
+
+class CalendarState {
+    var showDialog by mutableStateOf(false)
+    var selectedDay by mutableStateOf(1)
+    var selectedMonth by mutableStateOf(1)
+    var selectedYear by mutableStateOf(2024)
+
+    fun showDialogForDay(day: Int, month: Int, year: Int) {
+        selectedDay = day
+        selectedMonth = month
+        selectedYear = year
+        showDialog = true
+    }
+}
